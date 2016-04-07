@@ -1,9 +1,11 @@
 # roto_plugin
 
-Deutsche Anleitung: https://github.com/ivan73/roto_plugin/wiki/roto_plugin.Doku.de
+Deutsche Beschreibung: https://github.com/ivan73/roto_plugin/wiki/roto_plugin.Doku.de
 
-The plugin calculates the current position of the skylight (alternatively, the blinds / shutters) over the uptime.
-The position is continuously updated by the plugin position Item. For this, the plugin will trigger itself (by scheduler)
+(sorry für mein Englisch: die Englische Version der Beschreibung wurde größtenteils mit Google-Translate übersetzt..)
+
+The plugin calculates the current position of the skylight (alternatively, the blinds / shutters) over the runtime.
+The position is continuously updated in to the position Item. For this, the plugin will trigger itself (by scheduler)
 About the (external) setting the position Item also positions can be approached.
 
 referencing:
