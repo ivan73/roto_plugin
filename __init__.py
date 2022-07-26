@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # vim: set encoding=utf-8 tabstop=4 softtabstop=4 shiftwidth=4 expandtab
 #########################################################################
-# Copyright 2016 De Filippis Ivan            http://knx-user-forum.de/
+# Copyright 2013 KNX-User-Forum e.V.            http://knx-user-forum.de/
 #########################################################################
 #  This file is part of SmartHome.py.    http://mknx.github.io/smarthome/
 #
@@ -22,20 +22,16 @@
 import logging
 import time
 
-logger = logging.getLogger('')
-
 IDENTICICATION = 'Roto'
 IMPULS = 1
 UP = 0
 DOWN = 1
 OFF = 2
 
-
-
-
 class Roto():
-
+    PLUGIN_VERSION = "1.6.0"
     def __init__(self, smarthome):
+        self.logger = logging.getLogger(__name__)
         self._sh = smarthome
         self.__roto_items = {}
 
@@ -49,9 +45,9 @@ class Roto():
                     self.__roto_items[roto_item.id] = roto_item
                     count_items += 1
                 except ValueError as ex:
-                    logger.error("Item: {0}: {1}".format(item.id(), str(ex)))
+                    self.logger.error("Item: {0}: {1}".format(item.id(), str(ex)))
                     
-        logger.info("Using Roto for {0} Items".format(count_items))    
+        self.logger.info("Using Roto for {0} Items".format(count_items))    
 
     def stop(self):
         self.alive = False
@@ -59,7 +55,7 @@ class Roto():
     def parse_item(self, item):
         if 'roto_plugin' in item.conf and item.conf["roto_plugin"] == "active":
             return self.update_item 
-            #logger.debug("parse item: {0}".format(item))
+            #self.logger.debug("parse item: {0}".format(item))
         else:
             return None
 
@@ -72,10 +68,10 @@ class Roto():
         orig_caller, orig_source, orig_item = self.get_original_caller(self._sh, caller, source, item)
         
         if orig_caller == IDENTICICATION or caller == IDENTICICATION:
-            logger.debug("Ignoring changes from " + IDENTICICATION)
+            self.logger.debug("Ignoring changes from " + IDENTICICATION)
             return
        
-        #logger.info("update item: {0}".format(item.id()))
+        #self.logger.info("update item: {0}".format(item.id()))
         item_source = self._sh.return_item(source)
         if item.id() in self.__roto_items:
             roto_item = self.__roto_items[item.id()]
@@ -101,7 +97,8 @@ class Roto():
                 value = item()
             else:
                 value = orig_item()
-            logger.debug("roto set position: {0}".format(value))
+            self.logger.debug("roto set position: {0}".format(value))
+            #self.logger.info("roto set position orig_caller: {0}".format(orig_caller))
             roto_item.roto_position(value)
 			
 	
@@ -192,6 +189,8 @@ class RotoItem:
     # smarthome: instance of smarthome.py
     # item: item to use
     def __init__(self, smarthome, item):
+        #pydevd.settrace(IP) # Breakpoint Debugger
+        self.logger = logging.getLogger(__name__)
         self.__sh = smarthome
         self.__item = item
         self.__id = self.__item.id()
@@ -199,6 +198,7 @@ class RotoItem:
         self.__time_on = self.__sh.now()
         self.__time_off = self.__sh.now()
         self.__time_last_loop = self.__sh.now()
+        self.__actor_type = 'none'
         
         self.__time_up = 60
         if 'roto_time_up' in item.conf:
@@ -217,20 +217,20 @@ class RotoItem:
             self.__time_step = int(item.conf['roto_time_step'])
 
         if 'roto_actor_open' in item.conf and 'roto_actor_close' in item.conf:
-            self.__item_up = self.__sh.return_item(item.conf['roto_actor_up'])
-            self.__item_down = self.__sh.return_item(item.conf['roto_actor_down'])
+            self.__item_up = self.__sh.return_item(item.conf['roto_actor_open'])
+            self.__item_down = self.__sh.return_item(item.conf['roto_actor_close'])
             self.__actor_type = 'roto'
         elif 'roto_actor_up_down' in item.conf and 'roto_actor_stop' in item.conf:
             self.__item_up = self.__sh.return_item(item.conf['roto_actor_up_down'])
             self.__item_down = self.__sh.return_item(item.conf['roto_actor_stop'])
             self.__actor_type = 'jalousie'
         else:
-            logger.error("roto Aktor-Items fehlen oder fehlerhaft")
+            self.logger.error("roto Aktor-Items fehlen oder fehlerhaft")
            
         if 'roto_position' in item.conf:
             self.__item_position = self.__sh.return_item(item.conf['roto_position'])
         else:
-            logger.error("roto Positions-Items fehlt oder fehlerhaft")
+            self.logger.error("roto Positions-Items fehlt oder fehlerhaft")
         
         self.__delays = []
 
@@ -243,7 +243,7 @@ class RotoItem:
             self.roto_stop()
             time.sleep(IMPULS+1)
             if self.__direction != OFF:
-                logger.info("roto Position kann nicht angefahren werden da der Antrieb bereits faehrt: {0}".format(self.__position))
+                self.logger.info("roto Position kann nicht angefahren werden da der Antrieb bereits faehrt: {0}".format(self.__position))
                 return
                 
         new_pos = value
@@ -279,8 +279,10 @@ class RotoItem:
                 self.__direction = UP
                 self.__time_on = self.__sh.now()
                 self.__time_last_loop = self.__sh.now()
+                #self.roto_add_delay(DOWN, 0, IMPULS)
                 self.roto_add_delay(DOWN, 1, value)
-
+                #self.roto_add_delay(DOWN, 0, value + IMPULS)
+        
     def roto_down(self, value):
         if self.__direction != OFF:
             self.roto_stop()
@@ -299,8 +301,10 @@ class RotoItem:
                 self.__direction = DOWN
                 self.__time_on = self.__sh.now()
                 self.__time_last_loop = self.__sh.now()
+                #self.roto_add_delay(DOWN, 0, IMPULS)
                 self.roto_add_delay(DOWN, 1, value)
-
+                #self.roto_add_delay(DOWN, 0, value + IMPULS)
+        
     def roto_up_total(self):
         self.roto_up(self.__time_up)
         
@@ -318,46 +322,54 @@ class RotoItem:
             if self.__direction == UP:
                 self.__item_down(0)
                 self.__item_up(1)
-                logger.debug("roto_stop Fahrt-AUS Position: {0}".format(self.__position))
+                self.logger.debug("roto_stop Fahrt-AUS Position: {0}".format(self.__position))
+                #self.__direction = UP
+                #self.__time_on = self.__sh.now()
                 self.__delays = []
                 self.roto_add_delay(UP, 0, IMPULS)
                 
             if self.__direction == DOWN:
                 self.__item_up(0)
                 self.__item_down(1)
-                logger.debug("roto_stop Fahrt-AUS Position: {0}".format(self.__position))
+                self.logger.debug("roto_stop Fahrt-AUS Position: {0}".format(self.__position))
+                #self.__direction = DOWN
+                #self.__time_on = self.__sh.now()
                 self.__delays = []
                 self.roto_add_delay(DOWN, 0, IMPULS)
         elif self.__actor_type == 'jalousie':
             if self.__direction is not OFF:
                 self.__item_down(1)
-                logger.debug("roto_stop Fahrt-AUS Position: {0}".format(self.__position))
+                self.logger.debug("roto_stop Fahrt-AUS Position: {0}".format(self.__position))
                 self.__delays = []
                 self.__direction = OFF
             
         
     def roto_add_delay(self, direction, value, delay):
-
+        #if not item in self.__delays:
         x_delay = {}
         x_delay.update({'delay': delay})
         x_delay.update({'direction': direction})
         x_delay.update({'value': value})
         self.__delays.append(x_delay)
-        logger.debug("roto_add_delay: {0}".format(x_delay))
+        self.logger.debug("roto_add_delay: {0}".format(x_delay))
         
         if self.__id not in self.__sh.scheduler:
             s = self.__sh.scheduler.add(self.__id, self.roto_loop, prio=5, offset = 2, cycle=int(self.__cycle_time))
-
+        #else:
+        #    self.__sh.scheduler.change(self.__id, active=True)
+            
     # wird ueber scheduler aufgerufen
     def roto_loop(self):
         # Wenn keine Eintraege vorhanden sind, kann scheduler deaktiviert werden
         if (len(self.__delays)) == 0:
             if self.__id in self.__sh.scheduler:
-                logger.debug("roto_loop STOP scheduler")
+                self.logger.debug("roto_loop STOP scheduler")
                 self.__sh.scheduler.remove(self.__id)
                 self.__direction = OFF
+                #self.__sh.scheduler.change(self.__id, active=False)
             else:
-                logger.debug("roto_loop keine Eintraege in delays vorhanden")
+                self.logger.debug("roto_loop keine Eintraege in delays vorhanden")
+                #self.__sh.scheduler.change(self.__id, active=False)
         else:
             time_on_sec = (self.__sh.now() - self.__time_on).total_seconds()
             # delays-Liste sortieren
@@ -368,13 +380,14 @@ class RotoItem:
             if len(x_delays) > 0: 
                 x_delay = x_delays[0]
             else:
-                logger.debug("roto_loop keine Eintraege in x_delays vorhanden")
+                self.logger.debug("roto_loop keine Eintraege in x_delays vorhanden")
                 return
+            
             
             # Berechnen der Position Ueber die Fahrzeit
             self.roto_calc_pos()
             self.__time_last_loop = self.__sh.now()
-            logger.debug("roto_loop Position: {0}".format(self.__position))
+            self.logger.debug("roto_loop Position: {0}".format(self.__position))
             
             # Impuls ausschalten
             if x_delay['value'] == 0 and time_on_sec > x_delay['delay']:
@@ -386,7 +399,7 @@ class RotoItem:
                     self.__item_up(0)
                     self.__item_down(0)
                 self.__delays.remove(x_delay)
-                logger.debug("roto_loop Impuls-AUS Position: {0}".format(self.__position))
+                self.logger.debug("roto_loop Impuls-AUS Position: {0}".format(self.__position))
             
             #Fahrt aus
             elif self.__direction != OFF and x_delay['value'] == 1 and time_on_sec > x_delay['delay']:
@@ -398,15 +411,19 @@ class RotoItem:
                     self.__time_off = self.__sh.now()
                     self.__direction = OFF
                     self.__delays.remove(x_delay)
-                    logger.debug("roto_loop Fahrt-AUS Position: {0} ".format(self.__position))
+                    self.logger.debug("roto_loop Fahrt-AUS Position: {0} ".format(self.__position))
                 elif self.__actor_type == 'jalousie':
                     if x_delay['direction'] == DOWN:
                         self.__item_down(x_delay['value'])
                         self.__time_off = self.__sh.now()
                         self.__direction = OFF
                         self.__delays.remove(x_delay)
-                        logger.debug("roto_loop Fahrt-AUS Position: {0} ".format(self.__position))
-
+                        self.logger.debug("roto_loop Fahrt-AUS Position: {0} ".format(self.__position))
+                
+            
+            #self.logger.info("roto_loop")
+        
+        
     def roto_calc_pos(self):
         time_loop_sec = (self.__sh.now() - self.__time_last_loop).total_seconds()
         if self.__time_on > self.__time_off:
@@ -424,8 +441,7 @@ class RotoItem:
             self.__item_position(self.__position, caller=IDENTICICATION) # aktualisiere das Item
             return self.__position
         else:
-            logger.error("roto aktuelle Position konnte nicht berechnet werden: {0} {1} ".format(self.__time_on, self.__time_off))
-
+            self.logger.error("roto aktuelle Position konnte nicht berechnet werden: {0} {1} ".format(self.__time_on, self.__time_off))
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

@@ -1,0 +1,50 @@
+# Metadata for the Smart-Plugin
+plugin:
+    # Global plugin attributes
+    type: interface                 # plugin type (gateway, interface, protocol, system, web)
+    description:
+        de: 'Steuerung ROTO- Dachfenster'
+        en: 'control ROTO roof window'
+    maintainer: 'ivande'
+#    tester:                        # Who tests this plugin?
+#    keywords: iot xyz
+#    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
+#    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
+
+    version: 1.6.0                 # Plugin version
+    sh_minversion: 1.6             # minimum shNG version to use this plugin
+#    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
+    multi_instance: False           # plugin supports multi instance
+    classname: Roto          # class containing the plugin
+
+parameters:
+    # Definition of parameters to be configured in etc/plugin.yaml
+    
+item_attributes:
+    # Definition of item attributes defined by this plugin
+    type:
+        type: str
+        valid_list:
+          - 'bool'
+        valid_list_description:
+            de: ['Der Item Typ muss auf bool gestellt werden!']
+            en: ['The item type has to be set to bool']
+        description:
+            de: 'Datentyp des Objekt-Items. Muss "bool" sein.'
+            en: 'Data type of the object item. Has to be "bool"'
+
+    roto_plugin:
+        type: str
+        mandatory: True
+        valid_list:
+          - 'active'
+          - 'inactive'
+        valid_list_description:
+            de: ['Aktiviert das Plugin', 'Jeder andere Wert deaktiviert das Plugin']
+            en: ['Activates the plugin', 'Any other value deactivates the plugin']
+        description:
+            de: 'Kennzeichnet das Item als Objekt-Item des Roto-Plugins. Ist der Wert nicht "active", werden keine Zustände evaluiert.'
+            en: 'Makes the Roto-Plugin aware of this item as an object item. If the value is not "active", the state are not evaluated.'
+    
+   
+    
