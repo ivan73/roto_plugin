@@ -11,7 +11,7 @@ plugin:
 #    documentation: https://github.com/smarthomeNG/smarthome/wiki/CLI-Plugin        # url of documentation (wiki) page
 #    support: https://knx-user-forum.de/forum/supportforen/smarthome-py
 
-    version: 1.6.0                 # Plugin version
+    version: 1.6.1                 # Plugin version
     sh_minversion: 1.6             # minimum shNG version to use this plugin
 #    sh_maxversion:                 # maximum shNG version to use this plugin (leave empty if latest)
     multi_instance: False           # plugin supports multi instance
@@ -32,7 +32,6 @@ item_attributes:
         description:
             de: 'Datentyp des Objekt-Items. Muss "bool" sein.'
             en: 'Data type of the object item. Has to be "bool"'
-
     roto_plugin:
         type: str
         mandatory: True
@@ -45,6 +44,45 @@ item_attributes:
         description:
             de: 'Kennzeichnet das Item als Objekt-Item des Roto-Plugins. Ist der Wert nicht "active", werden keine Zustände evaluiert.'
             en: 'Makes the Roto-Plugin aware of this item as an object item. If the value is not "active", the state are not evaluated.'
+    roto_actor_close:
+        type: str
+        description:
+            de: 'Item welches das Plugin zum Zufahren beschreibt'
+    roto_actor_open:
+        type: str
+        description:
+            de: 'Item welches das Plugin zum Auffahren beschreibt'
+    roto_position:
+        type: str
+        description:
+            de: 'Fährt Position an, wenn das angegebene Item geschrieben wird'
+    roto_up_down:
+        type: str
+        description:
+            de: 'Fährt Auf oder Ab an, wenn das angegebene Item geschrieben wird'
+    roto_stop:
+        type: str
+        description:
+            de: 'Stoppt oder fährt Schritt, wenn das angegebene Item geschrieben wird'
+    roto_time_down:
+        type: num
+        default: 60
+        description:
+            de: 'benötigte Zeit (Sekunden) zum Runterfahren'
+    roto_time_up:
+        type: num
+        default: 60
+        description:
+            de: 'benötigte Zeit (Sekunden) zum Hochfahren'
+    roto_time_step:
+        type: num
+        default: 5
+        description:
+            de: 'Zeit (Sekunden) wie lange ein Schritt gefahren wird'
+    
+    
+    
+    
     
    
     

@@ -29,7 +29,7 @@ DOWN = 1
 OFF = 2
 
 class Roto():
-    PLUGIN_VERSION = "1.6.0"
+    PLUGIN_VERSION = "1.6.1"
     def __init__(self, smarthome):
         self.logger = logging.getLogger(__name__)
         self._sh = smarthome
@@ -54,8 +54,8 @@ class Roto():
 
     def parse_item(self, item):
         if 'roto_plugin' in item.conf and item.conf["roto_plugin"] == "active":
+            self.logger.debug("parse item: {0}".format(item))
             return self.update_item 
-            #self.logger.debug("parse item: {0}".format(item))
         else:
             return None
 
@@ -70,9 +70,9 @@ class Roto():
         if orig_caller == IDENTICICATION or caller == IDENTICICATION:
             self.logger.debug("Ignoring changes from " + IDENTICICATION)
             return
-       
-        #self.logger.info("update item: {0}".format(item.id()))
+        
         item_source = self._sh.return_item(source)
+        self.logger.info("update item: {0} orig_caller: {1} source: {2} item_source: {3}".format(item.id(), orig_caller, source, item_source))
         if item.id() in self.__roto_items:
             roto_item = self.__roto_items[item.id()]
         else:
@@ -189,7 +189,6 @@ class RotoItem:
     # smarthome: instance of smarthome.py
     # item: item to use
     def __init__(self, smarthome, item):
-        #pydevd.settrace(IP) # Breakpoint Debugger
         self.logger = logging.getLogger(__name__)
         self.__sh = smarthome
         self.__item = item
@@ -245,9 +244,11 @@ class RotoItem:
             if self.__direction != OFF:
                 self.logger.info("roto Position kann nicht angefahren werden da der Antrieb bereits faehrt: {0}".format(self.__position))
                 return
-                
+
         new_pos = value
         old_pos = self.__position
+        
+        self.logger.debug("roto_position old:{0} new:{1}".format(old_pos, new_pos))  
         
         # Auffahren
         if new_pos > old_pos:
@@ -361,6 +362,7 @@ class RotoItem:
     # wird ueber scheduler aufgerufen
     def roto_loop(self):
         # Wenn keine Eintraege vorhanden sind, kann scheduler deaktiviert werden
+        self.logger.debug("roto_loop: delays{0} ".format(len(self.__delays)))
         if (len(self.__delays)) == 0:
             if self.__id in self.__sh.scheduler:
                 self.logger.debug("roto_loop STOP scheduler")
@@ -442,6 +444,9 @@ class RotoItem:
             return self.__position
         else:
             self.logger.error("roto aktuelle Position konnte nicht berechnet werden: {0} {1} ".format(self.__time_on, self.__time_off))
+        
+        
+    
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
