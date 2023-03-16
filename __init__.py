@@ -21,6 +21,8 @@
 
 import logging
 import time
+from lib.model.smartplugin import *
+from lib.item import Items
 
 IDENTICICATION = 'Roto'
 IMPULS = 1
@@ -28,17 +30,25 @@ UP = 0
 DOWN = 1
 OFF = 2
 
-class Roto():
-    PLUGIN_VERSION = "1.6.1"
+class Roto(SmartPlugin):
+
+    ALLOW_MULTIINSTANCE = False
+    PLUGIN_VERSION = "1.6.2"
+    
     def __init__(self, smarthome):
-        self.logger = logging.getLogger(__name__)
+        self.logger.info('Init roto plugin')
+
+        self.logger.debug(f"init {__name__}")
+
+        self.alive = False
         self._sh = smarthome
+        self.itemsApi = Items.get_instance()
         self.__roto_items = {}
 
     def run(self):
         self.alive = True
         count_items = 0
-        for item in self._sh.find_items("roto_plugin"):
+        for item in self.itemsApi.find_items("roto_plugin"):
             if item.conf["roto_plugin"] == "active":
                 try:
                     roto_item = RotoItem(self._sh, item)
@@ -161,7 +171,6 @@ class RotoItem:
     @property
     def time_step(self):
         return self.__time_step
-    
         
     @property
     def item_up(self):
@@ -421,8 +430,6 @@ class RotoItem:
                         self.__direction = OFF
                         self.__delays.remove(x_delay)
                         self.logger.debug("roto_loop Fahrt-AUS Position: {0} ".format(self.__position))
-                
-            
             #self.logger.info("roto_loop")
         
         
@@ -444,11 +451,3 @@ class RotoItem:
             return self.__position
         else:
             self.logger.error("roto aktuelle Position konnte nicht berechnet werden: {0} {1} ".format(self.__time_on, self.__time_off))
-        
-        
-    
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    myplugin = Roto('smarthome-dummy')
-    myplugin.run()
